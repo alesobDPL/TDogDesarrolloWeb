@@ -1,2 +1,2 @@
-Manuel Torre sobarzo
+Manuel Torres sobarzo
 IECI - 4 AÑO
