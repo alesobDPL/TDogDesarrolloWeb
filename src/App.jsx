@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
+import react, { useEffect, useState } from "react";
+import { useBuscarInfoQuery } from "./queries/getDog";
 import "./App.css";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import IconButton from "@mui/material/IconButton";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import DoNotDisturbIcon from "@mui/icons-material/DoNotDisturb";
+import AccordionHelp from "./Apearance/accordion";
+import Tooltip from "@mui/material/Tooltip";
+
 import {
   Box,
   Card,
@@ -12,56 +18,27 @@ import {
 import axios from "axios";
 
 function App() {
-  const [Loading,setLoading] = useState(false);
-  const [DesactivateButton,setDesactivateButton] = useState(false);
+  const [params, setParams] = useState({ limit: 2000 });
+  const [Loading, setLoading] = useState(false);
   const [ListadoDerecha, setListadoDerecha] = useState([]);
   const [ListadoIzquierda, setListadoIzquierda] = useState([]);
-  const [dogLover, setDogLover] = useState({
-    label: null,
-    image: null,
-  });
 
-  const getDog = async () => {
-    setDesactivateButton(true)
-    setLoading(true); // Set loading state to true
-    const response = await axios.get("https://dog.ceo/api/breeds/image/random");
-    // Create a random name
-    const name = nombreRandom();
-  
-    //Override the dogLover properties.
-    setDogLover({
-      ...dogLover,
-      image: response.data.message,
-      label: name,
-    });
-  
-    // Set loading state to false
-    setDesactivateButton(false)
-    setLoading(false);
-    
-  };
-
-  function nombreRandom() {
-    let res = "";
-    for (let i = 0; i < 6; i++) {
-      const random = Math.floor(Math.random() * 25);
-      res += String.fromCharCode(97 + random);
-    }
-    return res;
-  }
-
-  useEffect(() => {
-    getDog();
-  }, []);
+  const {
+    data: dogLoveQuery,
+    isLoading: cargando,
+    refetch: recargar,
+    isRefetching: estaCargando,
+    isError: errors,
+  } = useBuscarInfoQuery(params);
 
   const aceptar = (item) => {
     setListadoDerecha(ListadoDerecha.concat(item));
-    getDog();
+    recargar();
   };
 
   const rechazar = (item) => {
     setListadoIzquierda(ListadoIzquierda.concat(item));
-    getDog();
+    recargar();
   };
 
   const aceptarContrario = (objeto) => {
@@ -74,92 +51,184 @@ function App() {
     setListadoDerecha(ListadoDerecha.filter((x) => x != objeto));
   };
 
-
+  if(cargando) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        sx={{ width: "100%", height: 300, objectFit: "cover" }}
+      >
+        <CircularProgress size={150} />
+      </Box>
+    );
+  }
 
 
   return (
     <Box>
-      <Grid
-        container
-        direction="row"
-        
-        alignItems="center"
-        spacing={1}
-      >
-        <Grid item md={4} xs={4} sx={{ background: "grey" }}>
+      <Grid container direction="row" spacing={4}>
+        <Grid item xs={12} sx={12}s md={4} >
+          <Card
+            sx={{
+              width: {
+                xs: '50%', // for screens smaller than 'sm'
+                sm: '50%', // for screens larger than 'sm' but smaller than 'md'
+                md: '100%', // for screens larger than 'md' but smaller than 'lg'
+                lg: '100%', // for screens larger than 'lg'
+              },
+              boxShadow: "0px 0px 20px rgba(60,167,255,1)",
+              justifyContent:"center",
+              alignItems:"center",
+              height: "100%",
 
-        {ListadoIzquierda.map((item,index) => (
-          <Card key={index} sx={{ maxWidth: 250, margin: '0 auto', boxShadow: '0px 0px 5px rgba(0,0,0,0.3)' }} >
-            
-            <CardMedia
-              component="img"
-              image={item?.image}
-              sx={{ width: '100%', height: 250, objectFit: 'cover' }}
-              // ver como ajustar url
-            />
+            }}>
 
-            <CardContent sx={{ textAlign: 'center' }}>
-              nombre: {item?.label}<br />
-              <button onClick={() => aceptarContrario(item)}>Aceptar</button>
+            {estaCargando ? ( // Conditionally render loading spinner
+              <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                sx={{ width: "100%", height: 250, objectFit: "cover" }}
+              >
+                <CircularProgress size={80} />
+              </Box>
+            ) : (
+              <Box
+                justifyContent="center"
+                alignItems="center"
+                marginTop={"15px"}
+                marginLeft={"15px"}
+                marginRight={"15px"}
+              >
+                <h3>🐾 Nombre:</h3>
+                <h1>{dogLoveQuery?.label}</h1>
 
+                <CardMedia
+                  component="img"
+                  image={dogLoveQuery?.image}
+                  sx={{ width: "100%", height: 250, objectFit: "cover" }}
+                />
+                <AccordionHelp expandedIf={"panel1"} paragraph={dogLoveQuery.description}/>
+              </Box>
+            )}
+            <CardContent sx={{ textAlign: "center" }}>
+              <Tooltip title="Rechazar" placement="top">
+                <IconButton
+                  size="large"
+                  color="error"
+                  disabled={estaCargando}
+                  onClick={() => rechazar(dogLoveQuery)}
+                >
+                  <DoNotDisturbIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Aceptar" placement="top">
+                <IconButton
+                  size="large"
+                  color="success"
+                  disabled={estaCargando}
+                  onClick={() => aceptar(dogLoveQuery)}
+                >
+                  <CheckCircleOutlineIcon />
+                </IconButton>
+              </Tooltip>
             </CardContent>
-            
           </Card>
-          ))}
+        </Grid>
+        <Grid
+          item
+          xs={12} sm={6} md={4}
+          style={{ maxHeight: "100vh", overflow: "auto" }}
+        >
+          {ListadoIzquierda.slice(0)
+            .reverse()
+            .map((item, index) => (
+              <Card
+                key={index}
+                sx={{
+                  maxWidth: 200,
+                  margin: "15px",
+                  boxShadow: "0px 0px 5px rgba(0,0,0,0.3)",
+                }}
+              >
+                <Box
+                  justifyContent="center"
+                  alignItems="center"
+                  margin={"15px"}
+                >
+                  <h2>🐾 Nombre: {item?.label}</h2>
+                  <CardMedia
+                    component="img"
+                    image={item?.image}
+                    sx={{ width: "100%", height: 150, objectFit: "cover" }}
+                  />
+                   <AccordionHelp paragraph={item?.description}/>
+                </Box>
 
-
-
+                <CardContent sx={{ textAlign: "center" }}>
+                  <Tooltip title="Aceptar" placement="top">
+                    <IconButton
+                      size="large"
+                      color="Success"
+                      disabled={estaCargando}
+                      onClick={() => aceptarContrario(item)}
+                    >
+                      <CheckCircleOutlineIcon />
+                    </IconButton>
+                  </Tooltip>
+                </CardContent>
+              </Card>
+            ))}
         </Grid>
 
-        <Grid item md={4}  sx={{ background: "green" }}>
-  <Card sx={{ maxWidth: 250, margin: '0 auto', boxShadow: '0px 0px 5px rgba(0,0,0,0.3)' }}>
-    {Loading ? ( // Conditionally render loading spinner
-      <Box display="flex" justifyContent="center" alignItems="center" height="250px">
-        <CircularProgress size={80} />
-      </Box>
-    ) : (
-      <Box>
-        <CardMedia
-          component="img"
-          image={dogLover?.image}
-          sx={{ width: '100%', height: 250, objectFit: 'cover' }}
-        />
-        nombre: {dogLover?.label}<br />
-      </Box>
-      
-    )}
-  </Card>
-  <CardContent sx={{ textAlign: 'center' }}>
-          
-          <button  disabled={DesactivateButton} onClick={() => rechazar(dogLover)}>Rechazar</button>
-          <button  disabled={DesactivateButton} onClick={() => aceptar(dogLover)}>Aceptar</button>
-        </CardContent>
-</Grid>
+        <Grid
+          item
+          xs={12} sm={6} md={4}
+          style={{ maxHeight: "100vh", overflow: "auto" }}
+        >
+          {ListadoDerecha.slice(0)
+            .reverse()
+            .map((item, index) => (
+              <Card
+                key={index}
+                sx={{
+                  maxWidth: 200,
+                  margin: "15px",
+                  boxShadow: "0px 0px 5px rgba(0,0,0,0.3)",
+                }}
+                
+              >
+                <Box
+                  justifyContent="center"
+                  alignItems="center"
+                  margin={"15px"}
+                >
+                  <h2>🐾 Nombre: {item?.label}</h2>
 
-        <Grid item md={4} xs={4} sx={{ background: "blue" }}>
-        {ListadoDerecha.map((item,index) => (
-          <Card sx={{ maxWidth: 250, margin: '0 auto', boxShadow: '0px 0px 5px rgba(0,0,0,0.3)' }}>
-            
-            <CardMedia
-              component="img"
-              image={item?.image}
-              sx={{ width: '100%', height: 250, objectFit: 'cover' }}
-              
-              
-              // ver como ajustar url
-            />
+                  <CardMedia
+                    component="img"
+                    image={item?.image}
+                    sx={{ width: "100%", height: 150, objectFit: "cover" }}
+                  />
+                  <AccordionHelp paragraph={item?.description}/>
+                </Box>
 
-            <CardContent sx={{ textAlign: 'center' }}>
-              
-              nombre: {item?.label}<br />
-              <button onClick={() => rechazarContrario(item)}>Rechazar</button>
-
-            </CardContent>
-            
-          </Card>
-          ))}
+                <CardContent sx={{ textAlign: "center" }}>
+                  <Tooltip title="Rechazar" placement="top">
+                    <IconButton
+                      size="large"
+                      color="error"
+                      disabled={estaCargando}
+                      onClick={() => rechazarContrario(item)}
+                    >
+                      <DoNotDisturbIcon />
+                    </IconButton>
+                  </Tooltip>
+                </CardContent>
+              </Card>
+            ))}
         </Grid>
-        
       </Grid>
     </Box>
   );

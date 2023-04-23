@@ -5,6 +5,10 @@
   text-align: center;
 }
 
+body {
+  background: url('/public/colours-pooch-grey-dogs-mica-effect-smooth-wallpaper~5397007220308_38c_bq.jpeg') repeat;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
