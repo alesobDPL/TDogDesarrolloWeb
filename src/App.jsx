@@ -68,7 +68,7 @@ function App() {
   return (
     <Box>
       <Grid container direction="row" spacing={4}>
-        <Grid item xs={12} sx={12}s md={4} >
+        <Grid item xs={12} sm={12}s md={4} >
           <Card
             sx={{
               width: {
@@ -138,7 +138,7 @@ function App() {
         </Grid>
         <Grid
           item
-          xs={12} sm={6} md={4}
+          xs={6} sm={6} md={4}
           style={{ maxHeight: "100vh", overflow: "auto" }}
         >
           {ListadoIzquierda.slice(0)
@@ -184,7 +184,7 @@ function App() {
 
         <Grid
           item
-          xs={12} sm={6} md={4}
+          xs={6} sm={6} md={4}
           style={{ maxHeight: "100vh", overflow: "auto" }}
         >
           {ListadoDerecha.slice(0)
